@@ -1,0 +1,28 @@
+{% extends "livescore/base.html" %}
+{% load bootstrap5 %}
+<!-- {# Load CSS and JavaScript #} -->
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+
+{% block title %}
+Live Scores
+{% endblock %}
+
+{% block content %}
+<h1 class="display-4">Live Scores</h1>
+<div id="scores-container">
+    {% for match in matches %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">Competition: {{ match.competition.name }}</h5>
+            <p class="card-text">Home Team: <a href="{% url 'team_analysis' %}" class="card-link">
+                    {{ match.homeTeam.name }}</a></p>
+            <p class="card-text">Away Team: <a href="{% url 'team_analysis' %}" class="card-link">
+                    {{ match.awayTeam.name }}</a></p>
+            <p class="card-text">Score: {{ match.score.fullTime.home }} - {{ match.score.fullTime.away }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

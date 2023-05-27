@@ -1,0 +1,44 @@
+{% extends "livescore/base.html" %}
+{% load bootstrap5 %}
+<!-- {# Load CSS and JavaScript #} -->
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+
+{% block title %}
+Live Scores
+{% endblock %}
+
+{% block content %}
+<h1>Live Scores</h1>
+<div id="scores-container">
+    <!-- Scores will be dynamically updated here -->
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        var eventSource = new EventSource('/livescores');
+
+        eventSource.addEventListener('message', function (event) {
+            var data = JSON.parse(event.data);
+            updateScores(data);
+        });
+
+        function updateScores(data) {
+            // Example: Update the scores container with the data
+            $('#scores-container').empty();
+            data.matches.forEach(function (match) {
+                var homeTeam = match.homeTeam.name;
+                var awayTeam = match.awayTeam.name;
+                var score = match.score.fullTime.home + ' - ' + match.score.fullTime.away;
+                var scoreItem = $('<div>').text(homeTeam + ' vs ' + awayTeam + ': ' + score);
+                $('#scores-container').append(scoreItem);
+            });
+        }
+    });
+</script>
+{% endblock %}
