@@ -69,34 +69,32 @@ def get_matches(request):
         return JsonResponse({'error': 'Failed to fetch matches.'}, status=response.status_code)
 
 
-def team_analysis(request):
-    data = {
-        "area": {"id": 2220, "name": "South America", "code": "SAM", "flag": "https://crests.football-data.org/CLI.svg"},
-        "competition": {"id": 2152, "name": "Copa Libertadores", "code": "CLI", "type": "CUP", "emblem": "https://crests.football-data.org/CLI.svg"},
-        "season": {"id": 1545, "startDate": "2023-02-08", "endDate": "2023-11-11", "currentMatchday": 4, "winner": None},
-        "status": "FINISHED",
-        "matchday": 4,
-        "stage": "GROUP_STAGE",
-        "group": "GROUP_A",
-        "homeTeam": {"id": 9362, "name": "CD Nublense", "shortName": "Nublense", "tla": "CDN", "crest": "https://crests.football-data.org/9362.png"},
-        "awayTeam": {"id": 1783, "name": "CR Flamengo", "shortName": "Flamengo", "tla": "FLA", "crest": "https://crests.football-data.org/1783.png"},
-        "score": {"winner": "DRAW", "duration": "REGULAR", "fullTime": {"home": 1, "away": 1}, "halfTime": {"home": 0, "away": 1}},
-        "referees": []
-    }
+def team_analysis(request, match_id):
+    matches = fetch_data()
+    match = None
+
+    for m in matches:
+        if m['id'] == match_id:
+            match = m
+            break
+
+    if match is None:
+        return JsonResponse({'error': 'Match not found.'}, status=404)
 
     context = {
-        "competition": data["competition"],
-        "season": data["season"],
-        "matchday": data["matchday"],
-        "stage": data["stage"],
-        "group": data["group"],
-        "home_team": data["homeTeam"]["name"],
-        "away_team": data["awayTeam"],
-        "score": data["score"],
-        "referees": data["referees"],
+        "competition": match["competition"],
+        "season": match["season"],
+        "matchday": match["matchday"],
+        "stage": match["stage"],
+        "group": match["group"],
+        "home_team": match["homeTeam"],
+        "away_team": match["awayTeam"],
+        "score": match["score"],
+        "referees": match["referees"],
     }
 
     return render(request, 'livescore/team_analysis.html', context)
+
 
 
 def about_us(request):

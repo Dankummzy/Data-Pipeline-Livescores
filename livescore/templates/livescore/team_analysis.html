@@ -1,6 +1,6 @@
 {% extends "livescore/base.html" %}
 {% load bootstrap5 %}
-<!-- {# Load CSS and JavaScript #} -->
+<!-- Load CSS and JavaScript -->
 {% bootstrap_css %}
 {% bootstrap_javascript %}
 
@@ -11,62 +11,42 @@ Team Analysis
 
 {% block content %}
 <div class="container">
-    <h1 class="display-4 mb-4">Team Analysis</h1>
-
-    <section class="mb-5 bg-light p-4">
-        <h2 class="text-primary">Competition: {% if competition %}{{ competition.name }}{% endif %}</h2>
-        <h3>Season: {% if season %}{{ season.startDate }} - {{ season.endDate }}{% endif %}</h3>
-        <h3>Matchday: {% if matchday %}{{ matchday }}{% endif %}</h3>
-        <h3>Stage: {% if stage %}{{ stage }}{% endif %}</h3>
-        <h3>Group: {% if group %}{{ group }}{% endif %}</h3>
-    </section>
-
-    <section class="mb-5">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="bg-light p-4">
-                    <h2>Home Team: {% if home_team %}{{ home_team.name }}{% endif %}</h2>
-                    <h3>Short Name: {% if home_team %}{{ home_team.shortName }}{% endif %}</h3>
-                    {% if home_team %}
-                    <img src="{{ home_team.crest }}" alt="{{ home_team.shortName }} Crest" class="img-fluid">
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="team-details text-center p-3 bg-primary text-white">
+                <img src="{{ home_team.crest }}" alt="{{ home_team.shortName }} Crest" class="img-fluid">
+                <h3 class="mt-3">{{ home_team.name }}</h3>
+                <ul class="list-unstyled">
+                    {% if home_team_players %}
+                    {% for player in home_team_players %}
+                    <li>{{ player }}</li>
+                    {% endfor %}
+                    {% else %}
+                    <li>No players available</li>
                     {% endif %}
-                </div>
+                </ul>
             </div>
-            <div class="col-md-6">
-                <div class="bg-light p-4">
-                    <h2>Away Team: {% if away_team %}{{ away_team.name }}{% endif %}</h2>
-                    <h3>Short Name: {% if away_team %}{{ away_team.shortName }}{% endif %}</h3>
-                    {% if away_team %}
-                    <img src="{{ away_team.crest }}" alt="{{ away_team.shortName }} Crest" class="img-fluid">
+        </div>
+        <div class="col-lg-4">
+            <div class="text-center p-3 bg-secondary">
+                <h1 class="score display-4">{% if score.fullTime %}{{ score.fullTime.home }}-{{ score.fullTime.away }}{% endif %}</h1>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="team-details text-center p-3 bg-primary text-white">
+                <img src="{{ away_team.crest }}" alt="{{ away_team.shortName }} Crest" class="img-fluid">
+                <h3 class="mt-3">{{ away_team.name }}</h3>
+                <ul class="list-unstyled">
+                    {% if away_team_players %}
+                    {% for player in away_team_players %}
+                    <li>{{ player }}</li>
+                    {% endfor %}
+                    {% else %}
+                    <li>No players available</li>
                     {% endif %}
-                </div>
+                </ul>
             </div>
         </div>
-    </section>
-
-    <section class="mb-5 bg-light p-4">
-        <div class="row">
-            <div class="col-md-6">
-                <h2>Match Result: {% if score.fullTime %}{{ score.fullTime.home }} - {{ score.fullTime.away }}{% endif %}</h2>
-                <h3>Winner: {% if score.winner %}{{ score.winner }}{% endif %}</h3>
-            </div>
-        </div>
-    </section>
-
-    <section class="mb-5">
-        <div class="bg-light p-4">
-            <h2 class="mt-4">Referees:</h2>
-            <ul class="list-group">
-                {% if referees %}
-                {% for referee in referees %}
-                <li class="list-group-item">{{ referee }}</li>
-                {% endfor %}
-                {% else %}
-                <li class="list-group-item">No referees available</li>
-                {% endif %}
-            </ul>
-        </div>
-    </section>
+    </div>
 </div>
-
 {% endblock content %}
