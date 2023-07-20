@@ -4,6 +4,7 @@ from django.http import JsonResponse, StreamingHttpResponse
 from django.shortcuts import render
 from kafka import KafkaProducer, KafkaConsumer, TopicPartition
 import threading
+import datetime
 
 TOPIC_NAME = "livescores"
 KAFKA_SERVER = 'localhost:9092'
@@ -25,6 +26,8 @@ consumer.assign([topic_partition])
 
 consumer_lock = threading.Lock()
 
+# Replace this with your Sportmonks API token
+api_token = "QDpuuJM1wzlBNDssJAxF2JVXnZraza3dA5WdVVZsMP2jrgvi6TIPE3n17Ug0"
 
 def consume_messages():
     with consumer_lock:
@@ -33,13 +36,21 @@ def consume_messages():
 
 
 def fetch_data():
-    uri = 'https://api.football-data.org/v4/matches'
-    headers = {'X-Auth-Token': '13224ed623424ea4a72fb5d6c0622e0d'}
+    url = "https://api.sportmonks.com/v3/football/livescores"
+    headers = {
+        "Authorization": f"Bearer {api_token}"
+    }
+    params = {
+        "api_token": api_token,
+        "include": "statistics;participants;scores"
+    }
+    response = requests.get(url, headers=headers, params=params)
 
-    response = requests.get(uri, headers=headers)
     if response.status_code == 200:
         data = response.json()
-        return data['matches']
+        matches = data.get("data", [])
+        print(matches)
+        return matches
     else:
         print('Failed to fetch data from the API:', response.content)
         return []
@@ -47,58 +58,110 @@ def fetch_data():
 
 def send_data_to_kafka():
     matches = fetch_data()
-    for match in matches:
-        producer.send(TOPIC_NAME, value=match)
+    if isinstance(matches, list) and len(matches) > 0:
+        for match in matches:
+            producer.send(TOPIC_NAME, value=match)
         producer.flush()
 
 
-def livescores(request):
-    return StreamingHttpResponse(consume_messages(), content_type='text/event-stream')
-
-
 def get_matches(request):
-    api_url = 'https://api.football-data.org/v4/matches'
-    headers = {'X-Auth-Token': '13224ed623424ea4a72fb5d6c0622e0d'}
-    response = requests.get(api_url, headers=headers)
+    url = "https://api.sportmonks.com/v3/football/livescores/latest"
+    headers = {
+        "Authorization": f"Bearer {api_token}"
+    }
+    params = {
+        "api_token": api_token,
+        "include": "scores"
+    }
+    response = requests.get(url, headers=headers, params=params)
 
     if response.status_code == 200:
-        matches = response.json()['matches']
-        context = {'matches': matches}
+        data = response.json()
+        matches = data.get("data", [])
+
+        match_info_list = []
+        for match in matches:
+            event_id = match.get("id")
+            home_team, away_team = match.get("name").split(" vs ")
+
+            # Find the scores for home and away team
+            scores = match.get("scores", [])
+            home_score = "-"
+            away_score = "-"
+            for score in scores:
+                if score.get("description") == "CURRENT":
+                    if score.get("score", {}).get("participant") == "home":
+                        home_score = score.get("score", {}).get("goals", "-")
+                    elif score.get("score", {}).get("participant") == "away":
+                        away_score = score.get("score", {}).get("goals", "-")
+
+            match_info = {
+                "event_id": event_id,
+                "home_team": home_team,
+                "away_team": away_team,
+                "home_score": home_score,
+                "away_score": away_score,
+            }
+            match_info_list.append(match_info)
+
+        context = {'matches': match_info_list}
+        print(context)
         return render(request, 'livescore/matches.html', context)
     else:
         return JsonResponse({'error': 'Failed to fetch matches.'}, status=response.status_code)
 
 
-def team_analysis(request, match_id):
-    matches = fetch_data()
-    match = None
+def team_analysis(request, event_id):
+    if not event_id:
+        return JsonResponse({'error': 'Match ID is required.'}, status=400)
 
-    for m in matches:
-        if m['id'] == match_id:
-            match = m
-            break
-
-    if match is None:
-        return JsonResponse({'error': 'Match not found.'}, status=404)
-
-    context = {
-        "competition": match["competition"],
-        "season": match["season"],
-        "matchday": match["matchday"],
-        "stage": match["stage"],
-        "group": match["group"],
-        "home_team": match["homeTeam"],
-        "away_team": match["awayTeam"],
-        "score": match["score"],
-        "referees": match["referees"],
+    url = f"https://api.sportmonks.com/v3/football/fixtures/{event_id}"
+    headers = {
+        "Authorization": f"Bearer {api_token}"
     }
+    params = {
+        "api_token": api_token,
+        "include": "scores;participants;periods;league;statistics;timeline;events;predictions;venue;lineups;referees"
+    }
+    response = requests.get(url, headers=headers, params=params)
 
-    return render(request, 'livescore/team_analysis.html', context)
+    if response.status_code == 200:
+        match = response.json().get("data", {})
+        print("Data:", match)
+        if match:
+            # Extract team names, logos, and scores
+            home_team, away_team = match.get("name").split(" vs ")
+            home_team_logo = match.get("participants", [])[1].get("image_path", "")
+            away_team_logo = match.get("participants", [])[0].get("image_path", "")
+            
+            # Find the scores for home and away team
+            scores = match.get("scores", [])
+            home_score = "-"
+            away_score = "-"
+            for score in scores:
+                if score.get("description") == "CURRENT":
+                    if score.get("score", {}).get("participant") == "home":
+                        home_score = score.get("score", {}).get("goals", "-")
+                    elif score.get("score", {}).get("participant") == "away":
+                        away_score = score.get("score", {}).get("goals", "-")
 
+            context = {
+                "match": match,
+                "home_team": home_team,
+                "away_team": away_team,
+                "home_team_logo": home_team_logo,
+                "away_team_logo": away_team_logo,
+                "home_score": home_score,
+                "away_score": away_score,
+            }
+            return render(request, 'livescore/team_analysis.html', context)
+
+    return JsonResponse({'error': 'Match not found.'}, status=404)
 
 
 def about_us(request):
     return render(request, 'livescore/about.html')
+
 
 def privacy_policy(request):
     return render(request, 'livescore/privacy.html')

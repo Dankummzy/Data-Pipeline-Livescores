@@ -1,52 +1,445 @@
 {% extends "livescore/base.html" %}
 {% load bootstrap5 %}
+
 <!-- Load CSS and JavaScript -->
 {% bootstrap_css %}
 {% bootstrap_javascript %}
 
-
 {% block title %}
-Team Analysis
-{% endblock title %}
+Match Analysis
+{% endblock %}
 
 {% block content %}
 <div class="container">
-    <div class="row">
-        <div class="col-lg-4">
-            <div class="team-details text-center p-3 bg-primary text-white">
-                <img src="{{ home_team.crest }}" alt="{{ home_team.shortName }} Crest" class="img-fluid">
-                <h3 class="mt-3">{{ home_team.name }}</h3>
-                <ul class="list-unstyled">
-                    {% if home_team_players %}
-                    {% for player in home_team_players %}
-                    <li>{{ player }}</li>
-                    {% endfor %}
-                    {% else %}
-                    <li>No players available</li>
+    <h1 class="text-center">Team Analysis</h1>
+    <p class="text-center">Match Date: {{ match.starting_at }}</p>
+
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-2 text-center">
+            <img src="{{ home_team_logo }}" alt="{{ home_team }} Logo" height="50">
+            <p class="mb-0">{{ home_team }}</p>
+        </div>
+        <div class="col-md-2 text-center">
+            <div class="d-flex align-items-center">
+                <p class="display-4">{{ home_score }}</p>
+                <p class="mx-2">VS</p>
+                <p class="display-4">{{ away_score }}</p>
+            </div>
+            {% if match.periods %}
+                {% for period in match.periods %}
+                    {% if period.description == '1st-half' %}
+                        {% if period.ended %}
+                            <p>1st-half: Ended</p>
+                        {% else %}
+                            <p>1st-half</p>
+                        {% endif %}
+                    {% elif period.description == '2nd-half' %}
+                        {% if period.ended %}
+                            <p>2nd-half: Ended</p>
+                        {% else %}
+                            <p>2nd-half</p>
+                        {% endif %}
                     {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+        <div class="col-md-2 text-center">
+            <img src="{{ away_team_logo }}" alt="{{ away_team }} Logo" height="50">
+            <p class="mb-0">{{ away_team }}</p>
+        </div>
+
+        <ul class="nav nav-tabs" id="matchTabs" role="tablist">
+            {% if match.league %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="league-tab" data-bs-toggle="tab" data-bs-target="#league"
+                    type="button" role="tab" aria-controls="league" aria-selected="true">League</button>
+            </li>
+            {% endif %}
+    
+            {% if match.formations %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="formations-tab" data-bs-toggle="tab" data-bs-target="#formations"
+                    type="button" role="tab" aria-controls="formations" aria-selected="false">Formations</button>
+            </li>
+            {% endif %}
+    
+            {% if match.scores %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="scores-tab" data-bs-toggle="tab" data-bs-target="#scores" type="button"
+                    role="tab" aria-controls="scores" aria-selected="false">Scores</button>
+            </li>
+            {% endif %}
+    
+            {% if match.statistics %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="statistics-tab" data-bs-toggle="tab" data-bs-target="#statistics"
+                    type="button" role="tab" aria-controls="statistics" aria-selected="false">Statistics</button>
+            </li>
+            {% endif %}
+
+            {% if match.timeline %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="timeline-tab" data-bs-toggle="tab" data-bs-target="#timeline"
+                type="button" role="tab" aria-controls="timeline" aria-selected="false">Timeline</button>
+        </li>
+        {% endif %}
+
+        {% if match.predictions %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="predictions-tab" data-bs-toggle="tab" data-bs-target="#predictions"
+                type="button" role="tab" aria-controls="predictions" aria-selected="false">Predictions</button>
+        </li>
+        {% endif %}
+
+        {% if match.venue_id %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="venue-tab" data-bs-toggle="tab" data-bs-target="#venue" type="button"
+                role="tab" aria-controls="venue" aria-selected="false">Venue</button>
+        </li>
+        {% endif %}
+
+        {% if match.lineups %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="lineups-tab" data-bs-toggle="tab" data-bs-target="#lineups" type="button"
+                role="tab" aria-controls="lineups" aria-selected="false">Lineups</button>
+        </li>
+        {% endif %}
+
+        {% if match.referees %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="referees-tab" data-bs-toggle="tab" data-bs-target="#referees" type="button"
+                role="tab" aria-controls="referees" aria-selected="false">Referees</button>
+        </li>
+        {% endif %}
+        </ul>
+    
+        <div class="tab-content" id="matchTabsContent">
+            {% if match.league %}
+            <div class="tab-pane fade show active" id="league" role="tabpanel" aria-labelledby="league-tab">
+                <h2>{{ match.league.name }}</h2>
+                <img src="{{ match.league.image_path }}" alt="{{ match.league.name }} Logo" height="50">
+            </div>
+            {% endif %}
+    
+            {% if match.formations %}
+            <div class="tab-pane fade" id="formations" role="tabpanel" aria-labelledby="formations-tab">
+                <h2>Formations</h2>
+                <ul>
+                    {% for formation in match.formations %}
+                    <li>
+                        <img src="{% if formation.location == 'home' %}{{ match.home_team.logo_url }}{% else %}{{ match.away_team.logo_url }}{% endif %}" alt="Team Logo" height="50">
+                        {{ formation.formation }}
+                        {% if formation.location == 'home' %}
+                        {{ match.home_team.name }}
+                        {% else %}
+                        {{ match.away_team.name }}
+                        {% endif %}
+                    </li>
+                    {% endfor %}
                 </ul>
             </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="text-center p-3 bg-secondary">
-                <h1 class="score display-4">{% if score.fullTime %}{{ score.fullTime.home }}-{{ score.fullTime.away }}{% endif %}</h1>
+            {% else %}
+            <div class="tab-pane fade" id="formations" role="tabpanel" aria-labelledby="formations-tab">
+                <h2>Formations</h2>
+                <p>This section is unavailable.</p>
             </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="team-details text-center p-3 bg-primary text-white">
-                <img src="{{ away_team.crest }}" alt="{{ away_team.shortName }} Crest" class="img-fluid">
-                <h3 class="mt-3">{{ away_team.name }}</h3>
-                <ul class="list-unstyled">
-                    {% if away_team_players %}
-                    {% for player in away_team_players %}
-                    <li>{{ player }}</li>
-                    {% endfor %}
-                    {% else %}
-                    <li>No players available</li>
-                    {% endif %}
-                </ul>
+            {% endif %}
+    
+            {% if match.scores %}
+    <div class="tab-pane fade" id="scores" role="tabpanel" aria-labelledby="scores-tab">
+        <h2>Scores</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="card-title">{{ home_team }}</h4>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        {% for score in match.scores %}
+                            {% if score.score.participant == 'home' %}
+                                <li class="list-group-item">
+                                    {{ home_team }} - {{ score.description }}: {{ score.score.goals }}
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="card-title">{{ away_team }}</h4>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        {% for score in match.scores %}
+                            {% if score.score.participant == 'away' %}
+                                <li class="list-group-item">
+                                    {{ away_team }} - {{ score.description }}: {{ score.score.goals }}
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
+{% else %}
+    <div class="tab-pane fade" id="scores" role="tabpanel" aria-labelledby="scores-tab">
+        <h2>Scores</h2>
+        <p>This section is unavailable.</p>
+    </div>
+{% endif %}
+    
+            {% if match.statistics %}
+    <div class="tab-pane fade" id="statistics" role="tabpanel" aria-labelledby="statistics-tab">
+        <h2>Statistics</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="card-title">{{ home_team }}</h4>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        {% for stat in match.statistics %}
+                            {% if stat.location == 'home' %}
+                                <li class="list-group-item">
+                                    {% if stat.type_id == 45 %}
+                                        {{ match.home_team.name }} Possession: {{ stat.data.value }}%
+                                    {% elif stat.type_id == 83 %}
+                                        {{ match.home_team.name }} Shots on Target: {{ stat.data.value }}
+                                    {% elif stat.type_id == 34 %}
+                                        {{ match.home_team.name }} Corner Kicks: {{ stat.data.value }}
+                                    {% elif stat.type_id == 84 %}
+                                        {{ match.home_team.name }} Yellow Cards: {{ stat.data.value }}
+                                    {% elif stat.type_id == 52 %}
+                                        {{ match.home_team.name }} Goals Scored: {{ stat.data.value }}
+                                    {% elif stat.type_id == 85 %}
+                                        {{ match.home_team.name }} Offsides: {{ stat.data.value }}
+                                    {% endif %}
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="card-title">{{ away_team }}</h4>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        {% for stat in match.statistics %}
+                            {% if stat.location == 'away' %}
+                                <li class="list-group-item">
+                                    {% if stat.type_id == 45 %}
+                                        {{ match.away_team.name }} Possession: {{ stat.data.value }}%
+                                    {% elif stat.type_id == 83 %}
+                                        {{ match.away_team.name }} Shots on Target: {{ stat.data.value }}
+                                    {% elif stat.type_id == 34 %}
+                                        {{ match.away_team.name }} Corner Kicks: {{ stat.data.value }}
+                                    {% elif stat.type_id == 84 %}
+                                        {{ match.away_team.name }} Yellow Cards: {{ stat.data.value }}
+                                    {% elif stat.type_id == 52 %}
+                                        {{ match.away_team.name }} Goals Scored: {{ stat.data.value }}
+                                    {% elif stat.type_id == 85 %}
+                                        {{ match.away_team.name }} Offsides: {{ stat.data.value }}
+                                    {% endif %}
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="tab-pane fade" id="statistics" role="tabpanel" aria-labelledby="statistics-tab">
+        <h2>Statistics</h2>
+        <p>This section is unavailable.</p>
+    </div>
+{% endif %}
+
+{% if match.timeline %}
+        <div class="tab-pane fade" id="timeline" role="tabpanel" aria-labelledby="timeline-tab">
+            <h2>Timeline</h2>
+            <div class="row">
+                <div class="col-md-12">
+                    <ul class="list-group">
+                        {% for event in match.events %}
+                        <li class="list-group-item">
+                            {% if event.info %}
+                                {{ event.minute }}' - {{ event.info }} by {{ event.player_name }}
+                            {% else %}
+                                {{ event.minute }}' - {{ event.result }} by {{ event.player_name }}
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if match.predictions %}
+        <div class="tab-pane fade" id="predictions" role="tabpanel" aria-labelledby="predictions-tab">
+            <h2>Predictions</h2>
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Prediction Type</th>
+                        <th>Probability</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prediction in match.predictions %}
+                    <tr>
+                        <td>
+                            {% if prediction.type_id == 333 %}
+                                Will the match have a goal before 30 minutes?
+                            {% elif prediction.type_id == 334 %}
+                                Will the match have a goal after 30 minutes?
+                            {% elif prediction.type_id == 328 %}
+                                Will both teams score?
+                            {% elif prediction.type_id == 235 %}
+                                Total goals over/under 2.5?
+                            {% elif prediction.type_id == 240 %}
+                                Correct score prediction
+                            {% elif prediction.type_id == 330 %}
+                                Will there be a penalty kick in the match?
+                            {% elif prediction.type_id == 237 %}
+                                Full-time result prediction
+                            {% elif prediction.type_id == 232 %}
+                                Half-time result prediction
+                            {% elif prediction.type_id == 231 %}
+                                Will the match end in a draw?
+                            {% elif prediction.type_id == 239 %}
+                                Draw no bet prediction
+                            {% elif prediction.type_id == 238 %}
+                                Double chance prediction
+                            {% elif prediction.type_id == 236 %}
+                                Will both teams score in the 1st half?
+                            {% elif prediction.type_id == 326 %}
+                                Will there be a red card in the match?
+                            {% elif prediction.type_id == 1683 %}
+                                Asian handicap prediction
+                            {% elif prediction.type_id == 1679 %}
+                                Total goals prediction
+                            {% elif prediction.type_id == 332 %}
+                                Will there be a goal in the 1st half?
+                            {% elif prediction.type_id == 1689 %}
+                                Over/Under prediction (home team)
+                            {% elif prediction.type_id == 1688 %}
+                                Over/Under prediction (away team)
+                            {% elif prediction.type_id == 1690 %}
+                                Over/Under prediction (equal)
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if prediction.predictions %}
+                                {% for key, value in prediction.predictions.items %}
+                                    <p>{{ key }}: {{ value }}%</p>
+                                {% endfor %}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if match.venue_id %}
+        <div class="tab-pane fade" id="venue" role="tabpanel" aria-labelledby="venue-tab">
+            <h2>Venue Information</h2>
+            {% if match.venue %}
+                <p>Venue Name: {{ match.venue.name }}</p>
+                <p>City: {{ match.venue.city }}</p>
+                <p>Country: {{ match.venue.country }}</p>
+                <!-- Add more venue details if available -->
+            {% else %}
+                <p>Venue information not available.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    
+        {% if match.lineups %}
+        <div class="tab-pane fade" id="lineups" role="tabpanel" aria-labelledby="lineups-tab">
+            <h2>Lineups</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h4 class="card-title">{{ home_team }}</h4>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            {% for player in match.lineups.home %}
+                                <li class="list-group-item">
+                                    {{ player.name }} - {{ player.position }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h4 class="card-title">{{ away_team }}</h4>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            {% for player in match.lineups.away %}
+                                <li class="list-group-item">
+                                    {{ player.name }} - {{ player.position }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if match.venue_id %}
+        <div class="tab-pane fade" id="venue" role="tabpanel" aria-labelledby="venue-tab">
+            <h2>Venue Information</h2>
+            {% if match.venue %}
+                <p>Venue Name: {{ match.venue.name }}</p>
+                <p>City: {{ match.venue.city }}</p>
+                <p>Country: {{ match.venue.country }}</p>
+                <!-- Add more venue details if available -->
+            {% else %}
+                <p>Venue information not available.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if match.lineups %}
+        <div class="tab-pane fade" id="lineups" role="tabpanel" aria-labelledby="lineups-tab">
+            <!-- Your existing lineup section goes here... -->
+        </div>
+        {% endif %}
+
+        {% if match.referees %}
+        <div class="tab-pane fade" id="referees" role="tabpanel" aria-labelledby="referees-tab">
+            <h2>Referees</h2>
+            <ul>
+                {% for referee in match.referees %}
+                    {% if referee.type_id == 9 %}
+                        <li>Main Referee: {{ referee.referee_id }}</li>
+                    {% elif referee.type_id == 8 %}
+                        <li>Assistant Referee: {{ referee.referee_id }}</li>
+                    {% elif referee.type_id == 6 %}
+                        <li>Fourth Official: {{ referee.referee_id }}</li>
+                    {% elif referee.type_id == 7 %}
+                        <li>Video Assistant Referee (VAR): {{ referee.referee_id }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+            <!-- Your other tab contents... -->
+        </div>
+    </div>
 </div>
-{% endblock content %}
+{% endblock %}

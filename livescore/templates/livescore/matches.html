@@ -1,28 +1,34 @@
 {% extends "livescore/base.html" %}
 {% load bootstrap5 %}
-<!-- {# Load CSS and JavaScript #} -->
+
+<!-- Load CSS and JavaScript -->
 {% bootstrap_css %}
 {% bootstrap_javascript %}
-
 
 {% block title %}
 Live Scores
 {% endblock %}
 
 {% block content %}
-<h1 class="display-4">Live Scores</h1>
-<div id="scores-container">
-    {% for match in matches %}
-    <div class="card mb-3">
-        <div class="card-body">
-            <h5 class="card-title">Competition: {{ match.competition.name }}</h5>
-            <p class="card-text">Home Team: <a href="{% url 'team_analysis' match_id=match.id %}" class="card-link">
-                    {{ match.homeTeam.name }}</a></p>
-            <p class="card-text">Away Team: <a href="{% url 'team_analysis' match_id=match.id %}" class="card-link">
-                    {{ match.awayTeam.name }}</a></p>
-            <p class="card-text">Score: {{ match.score.fullTime.home }} - {{ match.score.fullTime.away }}</p>
-        </div>
+<div class="container mt-4">
+    <div class="text-center">
+        <h1>Today's Matches</h1>
     </div>
-    {% endfor %}
+
+    <div class="row">
+        {% for match in matches %}
+            {% if match.home_score is not None and match.away_score is not None %}
+                <div class="col-md-6 mt-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="card-title">{{ match.home_team }} vs {{ match.away_team }}</h2>
+                            <p class="card-text">Score: {{ match.home_score }} - {{ match.away_score }}</p>
+                            <a href="{% url 'team_analysis' event_id=match.event_id %}" class="btn btn-primary">View Full Analysis</a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}
